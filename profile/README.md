@@ -36,6 +36,10 @@ typed client libraries.
 | [Rust client](https://github.com/hubuum/hubuum-client-rust) | Sync and async typed clients, fluent queries, pagination, and task helpers. |
 | [Python client](https://github.com/hubuum/hubuum-client-python) | Sync and async typed clients with Pydantic models and complete OpenAPI coverage. |
 
+**Published platforms:** Server archives for Linux, macOS, and Windows, plus
+Linux container images for AMD64 and ARM64. CLI binaries for Linux x86_64/ARM64,
+Apple Silicon macOS, and Windows x86_64.
+
 ## Get started
 
 1. Follow the server [quick-start guide](https://github.com/hubuum/hubuum/blob/main/docs/quick_start.md)
