@@ -33,7 +33,7 @@ typed client libraries.
 | [Hubuum Server](https://github.com/hubuum/hubuum) | The Rust REST service, OpenAPI contract, deployment guides, and container images. |
 | [Hubuum Frontend](https://github.com/hubuum/hubuum-frontend) | A secure, horizontally scalable web console built with Next.js. |
 | [Hubuum CLI](https://github.com/hubuum/hubuum-cli) | Interactive, one-shot, and scripted terminal workflows. |
-| [Rust client](https://github.com/hubuum/hubuum-client-rust) | Async and blocking typed clients, fluent queries, pagination, and task helpers. |
+| [Rust client](https://github.com/hubuum/hubuum-client-rust) | Sync and async typed clients, fluent queries, pagination, and task helpers. |
 | [Python client](https://github.com/hubuum/hubuum-client-python) | Sync and async typed clients with Pydantic models and complete OpenAPI coverage. |
 
 ## Get started
