@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare tagged documentation and retain immutable release sites for Pages."""
+"""Prepare tagged documentation and retain released content for Pages."""
 
 from __future__ import annotations
 
@@ -241,7 +241,8 @@ def assemble(site: Path, archive: Path, version: str, source_sha: str) -> None:
             raise ValueError(f"Refusing to replace immutable {version}: source commit changed")
         if not (target / "index.html").is_file():
             raise ValueError(f"Archive for {version} is incomplete")
-        # Even a new renderer must not rewrite a previously published release.
+        # A new renderer must not rewrite released HTML or source artifacts.
+        # Shared presentation CSS is maintained separately by refresh_styles.
         return
     if target.exists():
         if version != "main":
@@ -274,6 +275,26 @@ def assemble(site: Path, archive: Path, version: str, source_sha: str) -> None:
         )
 
 
+def refresh_styles(archive: Path) -> None:
+    """Apply shared CSS fixes to retained editions without re-rendering them."""
+    stylesheet = Path("assets/stylesheets/extra.css")
+    manifest = archive / "versions.json"
+    if manifest.exists():
+        editions = [
+            validate_version(entry["version"])
+            for entry in json.loads(manifest.read_text())
+        ]
+        targets = [inside(archive, str(Path(edition) / stylesheet)) for edition in editions]
+    else:
+        targets = [inside(archive, str(stylesheet))]
+    content = (TOOLING / "theme" / stylesheet).read_bytes()
+    for target in targets:
+        # Only refresh the known shared stylesheet already used by an edition.
+        # Historical HTML, API/schema downloads, scripts and metadata stay intact.
+        if target.is_file():
+            target.write_bytes(content)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -283,6 +304,8 @@ def main() -> int:
     publish = commands.add_parser("assemble")
     publish.add_argument("--site", type=Path, required=True)
     publish.add_argument("--archive", type=Path, required=True)
+    styles = commands.add_parser("refresh-styles")
+    styles.add_argument("--archive", type=Path, required=True)
     for subparser in (prep, publish):
         subparser.add_argument("--version", required=True)
         subparser.add_argument("--source-sha", required=True)
@@ -290,8 +313,10 @@ def main() -> int:
     try:
         if args.command == "prepare":
             prepare(args.source, args.destination, args.version, args.source_sha)
-        else:
+        elif args.command == "assemble":
             assemble(args.site, args.archive, args.version, args.source_sha)
+        else:
+            refresh_styles(args.archive)
     except (ValueError, OSError) as error:
         parser.exit(1, f"Documentation version error: {error}\n")
     return 0

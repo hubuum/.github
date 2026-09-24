@@ -8,7 +8,7 @@ Each product keeps its documentation with its own source.
 ## Documentation platform
 
 [The maintainer guide](docs-tooling/README.md) describes the shared theme,
-source staging, immutable versions, link checks, and publishing workflow.
+source staging, frozen release content, shared styles, link checks, and publishing workflow.
 Projects pin the shared revision; a change here does not silently rebuild every
 site with moving tooling.
 
