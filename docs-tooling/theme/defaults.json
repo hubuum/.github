@@ -1,0 +1,80 @@
+{
+  "docs_dir": "docs",
+  "site_dir": "site",
+  "strict": true,
+  "extra_css": [
+    "assets/stylesheets/extra.css"
+  ],
+  "extra_javascript": [
+    "assets/javascripts/versions.js"
+  ],
+  "copyright": "Hubuum \u00b7 MIT licensed",
+  "theme": {
+    "variant": "modern",
+    "custom_dir": "docs-theme/overrides",
+    "language": "en",
+    "font": false,
+    "features": [
+      "navigation.tabs",
+      "navigation.tabs.sticky",
+      "navigation.sections",
+      "navigation.path",
+      "navigation.top",
+      "navigation.footer",
+      "navigation.instant",
+      "navigation.instant.progress",
+      "content.action.edit",
+      "content.code.copy",
+      "toc.follow"
+    ],
+    "icon": {
+      "logo": "lucide/network",
+      "repo": "fontawesome/brands/github"
+    },
+    "palette": [
+      {
+        "media": "(prefers-color-scheme: light)",
+        "scheme": "default",
+        "primary": "custom",
+        "accent": "teal",
+        "toggle": {
+          "icon": "lucide/moon",
+          "name": "Switch to dark mode"
+        }
+      },
+      {
+        "media": "(prefers-color-scheme: dark)",
+        "scheme": "slate",
+        "primary": "custom",
+        "accent": "teal",
+        "toggle": {
+          "icon": "lucide/sun",
+          "name": "Switch to light mode"
+        }
+      }
+    ]
+  },
+  "markdown_extensions": {
+    "admonition": {},
+    "attr_list": {},
+    "def_list": {},
+    "footnotes": {},
+    "md_in_html": {},
+    "tables": {},
+    "toc": {
+      "permalink": true
+    },
+    "pymdownx": {
+      "details": {},
+      "highlight": {
+        "anchor_linenums": true
+      },
+      "superfences": {}
+    }
+  },
+  "validation": {
+    "invalid_links": true,
+    "invalid_link_anchors": true
+  },
+  "extra": {}
+}
