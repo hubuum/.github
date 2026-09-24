@@ -120,6 +120,59 @@ nav = [{Home = "index.md"}, {Queries = "querying.md"}]
         with self.assertRaisesRegex(ValueError, "source commit changed"):
             versions.assemble(self.root / "build", self.root / "archive", "v0.0.16", "b" * 40)
 
+    def test_shared_style_refresh_preserves_all_other_archived_bytes(self):
+        self.write("build/index.html", "released prose")
+        self.write("build/openapi.json", '{"release": "original"}')
+        self.write("build/assets/stylesheets/extra.css", "old shared CSS")
+        self.write("build/assets/stylesheets/renderer.css", "original renderer CSS")
+        self.write("build/assets/javascripts/versions.js", "original script")
+        self.write("build/build.json", '{"source_sha": "original"}')
+        archive = self.root / "archive"
+        for edition in ("v0.0.15", "v0.0.16", "main"):
+            versions.assemble(self.root / "build", archive, edition, "a" * 40)
+        # A directory not in the version manifest must not be refreshed.
+        self.write("archive/untracked/assets/stylesheets/extra.css", "custom CSS")
+        style_paths = {
+            archive / edition / "assets/stylesheets/extra.css"
+            for edition in ("v0.0.15", "v0.0.16", "main")
+        }
+        retained = {
+            path.relative_to(archive): path.read_bytes()
+            for path in archive.rglob("*")
+            if path.is_file() and path not in style_paths
+        }
+        versions.refresh_styles(archive)
+        self.assertEqual(retained, {
+            path.relative_to(archive): path.read_bytes()
+            for path in archive.rglob("*")
+            if path.is_file() and path not in style_paths
+        })
+        shared_css = (versions.TOOLING / "theme/assets/stylesheets/extra.css").read_bytes()
+        for path in style_paths:
+            self.assertEqual(path.read_bytes(), shared_css)
+
+    def test_shared_style_refresh_supports_unversioned_landing_site(self):
+        self.write("archive/index.html", "ecosystem")
+        self.write("archive/assets/stylesheets/extra.css", "old shared CSS")
+        versions.refresh_styles(self.root / "archive")
+        self.assertEqual((self.root / "archive/index.html").read_text(), "ecosystem")
+        self.assertEqual(
+            (self.root / "archive/assets/stylesheets/extra.css").read_bytes(),
+            (versions.TOOLING / "theme/assets/stylesheets/extra.css").read_bytes(),
+        )
+
+    def test_shared_style_refresh_rejects_paths_outside_archive(self):
+        archive = self.root / "archive"
+        self.write("outside/assets/stylesheets/extra.css", "outside CSS")
+        for edition in ("../outside", "v0.0.16"):
+            with self.subTest(edition=edition):
+                self.write("archive/versions.json", json.dumps([{"version": edition}]))
+                if edition == "v0.0.16":
+                    (archive / edition).symlink_to(self.root / "outside", target_is_directory=True)
+                with self.assertRaises(ValueError):
+                    versions.refresh_styles(archive)
+                self.assertEqual((self.root / "outside/assets/stylesheets/extra.css").read_text(), "outside CSS")
+
     def test_main_can_be_replaced_without_changing_release_snapshots(self):
         self.write("build/index.html", "original")
         archive = self.root / "archive"

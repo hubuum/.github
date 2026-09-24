@@ -4,8 +4,9 @@ All six sites share Zensical styling, ecosystem navigation, source staging,
 link checks, and GitHub Pages publishing. Product repositories own their
 navigation, examples, API sources, compatibility records, and release history.
 The organization landing page is unversioned; each product's root opens its
-latest stable release, with immutable `/vX.Y.Z/` and explicitly selected `/main/`
-editions.
+latest stable release, with frozen release content at `/vX.Y.Z/` and explicitly
+selected `/main/` editions. Shared presentation styles can receive fixes across
+all editions.
 
 ## Repository ownership
 
@@ -79,10 +80,14 @@ so its site uses the release-published event directly.
 `docs-publish.yml` checks out the exact source revision validated by the build
 and downloads that run's artifact. Publication is serialized per repository.
 It combines editions with the retained `gh-pages` archive, commits generated
-files under `site/`, and deploys a Pages artifact. Release directories are
-append-only: the same source commit preserves the existing output, while a moved
-tag is rejected. The highest stable archived version remains the default when
-an older release is backfilled. Search stays within the selected edition.
+files under `site/`, and deploys a Pages artifact. A release's HTML, downloads,
+source revision, and renderer assets remain frozen; a moved tag is rejected.
+The single shared stylesheet, `assets/stylesheets/extra.css`, is refreshed from
+the pinned tooling for every retained edition, including older versions not
+rebuilt in that run. This lets layout and accessibility fixes reach released
+documentation without changing its prose, API reference, or version identity.
+The highest stable archived version remains the default when an older release
+is backfilled. Search stays within the selected edition.
 
 Archive retention is independent of Actions artifact expiry. Keep the
 `gh-pages` branch; never force-push or delete it. A manual workflow run on `main`

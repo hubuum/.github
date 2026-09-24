@@ -16,3 +16,8 @@ for edition in editions:
         "--site", str(source), "--archive", "target/docs-published/site",
         "--version", edition["version"], "--source-sha", edition["source_sha"],
     ], check=True)
+
+subprocess.run([
+    sys.executable, str(Path(__file__).with_name("docs-versions.py")),
+    "refresh-styles", "--archive", "target/docs-published/site",
+], check=True)
