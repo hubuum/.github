@@ -1,0 +1,25 @@
+{
+  "ecosystem_home": "https://hubuum.github.io/",
+  "ecosystem_projects": [
+    {
+      "name": "Server",
+      "url": "https://hubuum.github.io/hubuum/"
+    },
+    {
+      "name": "Frontend",
+      "url": "https://hubuum.github.io/hubuum-frontend/"
+    },
+    {
+      "name": "CLI",
+      "url": "https://hubuum.github.io/hubuum-cli/"
+    },
+    {
+      "name": "Rust client",
+      "url": "https://hubuum.github.io/hubuum-client-rust/"
+    },
+    {
+      "name": "Python client",
+      "url": "https://hubuum.github.io/hubuum-client-python/"
+    }
+  ]
+}

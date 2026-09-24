@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block announce %}
+  <nav class="hubuum-ecosystem" aria-label="Hubuum projects">
+    <a href="{{ config.extra.ecosystem_home }}"><strong>Hubuum</strong></a>
+    {% for project in config.extra.ecosystem_projects %}
+      <a href="{{ project.url }}">{{ project.name }}</a>
+    {% endfor %}
+  </nav>
+  {% if config.extra.docs_versioned %}
+  {% if config.extra.docs_version == "main" %}
+    <strong>Development documentation</strong> — may describe unreleased changes.
+  {% else %}
+    Documentation for <strong>{{ config.extra.docs_version }}</strong>.
+  {% endif %}
+  <label for="docs-version">Version</label>
+  <select id="docs-version" data-version="{{ config.extra.docs_version }}"
+    data-manifest="{{ '../versions.json' | url }}">
+    <option value="{{ config.extra.docs_version }}">{{ config.extra.docs_version }}</option>
+  </select>
+  {% endif %}
+{% endblock %}

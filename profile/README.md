@@ -11,6 +11,8 @@ place to collect, structure, relate, search, and govern data from the systems
 they already trust—through a consistent REST API, a web console, a CLI, and
 typed client libraries.
 
+[Explore Hubuum](https://hubuum.github.io/) · [Server documentation](https://hubuum.github.io/hubuum/)
+
 ## Why Hubuum?
 
 - **Model your world.** Define classes for your own domains, optionally validate
@@ -28,13 +30,13 @@ typed client libraries.
 
 ## The project
 
-| Repository | What it provides |
-| --- | --- |
-| [Hubuum Server](https://github.com/hubuum/hubuum) | The Rust REST service, OpenAPI contract, deployment guides, and container images. |
-| [Hubuum Frontend](https://github.com/hubuum/hubuum-frontend) | A secure, horizontally scalable web console built with Next.js. |
-| [Hubuum CLI](https://github.com/hubuum/hubuum-cli) | Interactive, one-shot, and scripted terminal workflows. |
-| [Rust client](https://github.com/hubuum/hubuum-client-rust) | Sync and async typed clients, fluent queries, pagination, and task helpers. |
-| [Python client](https://github.com/hubuum/hubuum-client-python) | Sync and async typed clients with Pydantic models and complete OpenAPI coverage. |
+| Repository | What it provides | Documentation |
+| --- | --- | --- |
+| [Hubuum Server](https://github.com/hubuum/hubuum) | The Rust REST service, OpenAPI contract, deployment guides, and container images. | [Server guides](https://hubuum.github.io/hubuum/) |
+| [Hubuum Frontend](https://github.com/hubuum/hubuum-frontend) | A secure, horizontally scalable web console built with Next.js. | [Frontend guides](https://hubuum.github.io/hubuum-frontend/) |
+| [Hubuum CLI](https://github.com/hubuum/hubuum-cli) | Interactive, one-shot, and scripted terminal workflows. | [CLI guides](https://hubuum.github.io/hubuum-cli/) |
+| [Rust client](https://github.com/hubuum/hubuum-client-rust) | Sync and async typed clients, fluent queries, pagination, and task helpers. | [Rust guides](https://hubuum.github.io/hubuum-client-rust/) |
+| [Python client](https://github.com/hubuum/hubuum-client-python) | Sync and async typed clients with Pydantic models and complete OpenAPI coverage. | [Python guides](https://hubuum.github.io/hubuum-client-python/) |
 
 **Published platforms:** Server archives for Linux, macOS, and Windows, plus
 Linux container images for AMD64 and ARM64. CLI binaries for Linux x86_64/ARM64,
@@ -42,9 +44,9 @@ Apple Silicon macOS, and Windows x86_64.
 
 ## Get started
 
-1. Follow the server [quick-start guide](https://github.com/hubuum/hubuum/blob/main/docs/quick_start.md)
-   to connect PostgreSQL and create the first administrator.
-2. Choose the [deployment guide](https://github.com/hubuum/hubuum/blob/main/docs/deployment.md)
+1. Open the [server documentation](https://hubuum.github.io/hubuum/)
+   for its latest released installation and administration guides.
+2. Choose the deployment guide in that edition
    for Docker or Podman Compose, or download a native binary from
    [GitHub Releases](https://github.com/hubuum/hubuum/releases).
 3. Add the [web console](https://github.com/hubuum/hubuum-frontend), or automate
@@ -60,7 +62,7 @@ Apple Silicon macOS, and Windows x86_64.
 ## Join in
 
 Hubuum is MIT-licensed and developed in the open. Start with the
-[server documentation](https://github.com/hubuum/hubuum#readme), browse the
+[server documentation](https://hubuum.github.io/hubuum/), browse the
 [OpenAPI contract](https://github.com/hubuum/hubuum/blob/main/docs/openapi.json),
 or [open an issue](https://github.com/hubuum/hubuum/issues) with a question or idea.
 

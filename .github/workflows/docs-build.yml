@@ -1,0 +1,104 @@
+name: Build documentation
+
+on:
+  workflow_call:
+    inputs:
+      tooling_revision:
+        required: true
+        type: string
+      source_ref:
+        required: true
+        type: string
+      version:
+        default: ''
+        type: string
+      versioned:
+        default: true
+        type: boolean
+      python_api:
+        default: false
+        type: boolean
+    outputs:
+      source_sha:
+        value: ${{ jobs.build.outputs.source_sha }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: hubuum/.github
+          ref: ${{ inputs.tooling_revision }}
+          path: target/docs-tooling
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10
+        if: inputs.python_api
+        with:
+          enable-cache: true
+      - name: Test shared documentation contracts
+        run: python3 -I -S target/docs-tooling/docs-tooling/test-check-docs.py
+      - name: Check the local and workflow tooling pins agree
+        env:
+          EXPECTED_TOOLING_REVISION: ${{ inputs.tooling_revision }}
+        run: |
+          source .github/docs-tools.env
+          test "$DOCS_TOOLING_REVISION" = "$EXPECTED_TOOLING_REVISION"
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          revisions = re.findall(r'uses: hubuum/\.github/\.github/workflows/docs-(?:build|publish)\.yml@([0-9a-f]{40})', Path('.github/workflows/docs.yml').read_text())
+          assert len(revisions) == 2 and set(revisions) == {os.environ['EXPECTED_TOOLING_REVISION']}, 'Update both workflow pins and .github/docs-tools.env together'
+          PY
+      - name: Build documentation editions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DOCS_TOOLING_ROOT: ${{ github.workspace }}/target/docs-tooling
+          REQUESTED_VERSION: ${{ inputs.version }}
+          VERSIONED: ${{ inputs.versioned }}
+        shell: bash
+        run: |
+          versions=(main)
+          if [[ "$VERSIONED" == true ]]; then
+            latest="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)"
+            [[ "$latest" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+            versions+=("$latest")
+            if [[ -n "$REQUESTED_VERSION" && "$REQUESTED_VERSION" != main && "$REQUESTED_VERSION" != "$latest" ]]; then
+              [[ "$REQUESTED_VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+              gh release view "$REQUESTED_VERSION" --json isDraft,isPrerelease \
+                --jq 'select(.isDraft == false and .isPrerelease == false)' | grep -q isDraft
+              versions+=("$REQUESTED_VERSION")
+            fi
+          fi
+          for version in "${versions[@]}"; do
+            bash scripts/docs.sh build "$version"
+            sha="$(python3 -c 'import json; print(json.load(open("target/docs-site/build.json"))["source_sha"])')"
+            python3 target/docs-tooling/docs-tooling/docs-versions.py assemble \
+              --site target/docs-site --archive target/docs-preview \
+              --version "$version" --source-sha "$sha"
+          done
+          python3 target/docs-tooling/docs-tooling/check-docs.py --site-dir target/docs-preview --skip-navigation
+      - name: Retain reviewable site
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: documentation-site
+          path: target/docs-preview/
+          if-no-files-found: error
+          retention-days: 14
