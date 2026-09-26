@@ -173,6 +173,53 @@ nav = [{Home = "index.md"}, {Queries = "querying.md"}]
                     versions.refresh_styles(archive)
                 self.assertEqual((self.root / "outside/assets/stylesheets/extra.css").read_text(), "outside CSS")
 
+    def test_retained_stylesheet_links_migrate_without_changing_content(self):
+        archive = self.root / "archive"
+        original = ("<!doctype html>\r\n<link data-href='keep' title='href=unchanged' rel='stylesheet' href='../assets/stylesheets/extra.css'>"
+                    '<link rel="stylesheet" href="../assets/stylesheets/renderer.css">'
+                    '<link rel="stylesheet" href="https://other.example/assets/stylesheets/extra.css">'
+                    '<p>Unchanged prose: assets/stylesheets/extra.css</p>'
+                    '<script>const text = "<link rel=stylesheet href=extra.css>";</script>')
+        page = archive / "v0.0.16/guide/index.html"
+        self.write("archive/versions.json", '[{"version": "v0.0.16"}]')
+        self.write("archive/v0.0.16/guide/index.html", original)
+        versions.refresh_styles(archive)
+        expected = original.replace("href='../assets/stylesheets/extra.css'", f"href='{versions.LIVE_STYLESHEET}'")
+        self.assertEqual(page.read_bytes(), expected.encode())
+        versions.refresh_styles(archive)
+        self.assertEqual(page.read_bytes(), expected.encode())
+
+    def test_local_templates_overlay_shared_templates(self):
+        self.write("docs/index.md", "# Home")
+        self.write("overrides/home.html", "<!doctype html>Production homepage")
+        with (self.root / "zensical.toml").open("a") as config:
+            config.write('\n[tool.hubuum_docs]\ntheme_overrides = "overrides"\n')
+        versions.prepare(self.root, self.root / "staged", "main", "a" * 40)
+        self.assertEqual((self.root / "staged/docs-theme/overrides/home.html").read_text(),
+                         "<!doctype html>Production homepage")
+        self.assertTrue((self.root / "staged/docs-theme/overrides/main.html").is_file())
+        project = tomllib.loads((self.root / "staged/zensical.toml").read_text())["project"]
+        self.assertEqual(project["extra_css"], [versions.LIVE_STYLESHEET])
+
+    def test_local_templates_use_tagged_source_not_current_checkout(self):
+        self.write("old/docs/index.md", "# Old release")
+        self.write("overrides/home.html", "Current only")
+        with (self.root / "zensical.toml").open("a") as config:
+            config.write('\n[tool.hubuum_docs]\ntheme_overrides = "overrides"\n')
+        versions.prepare(self.root / "old", self.root / "staged", "v0.0.16", "a" * 40)
+        self.assertFalse((self.root / "staged/docs-theme/overrides/home.html").exists())
+        with self.assertRaisesRegex(ValueError, "overrides are missing"):
+            versions.prepare(self.root / "old", self.root / "staged", "main", "a" * 40)
+
+    def test_local_template_symlinks_cannot_escape_source(self):
+        self.write("source/docs/index.md", "# Home")
+        self.write("outside/home.html", "Outside")
+        (self.root / "source/overrides").symlink_to(self.root / "outside", target_is_directory=True)
+        with (self.root / "zensical.toml").open("a") as config:
+            config.write('\n[tool.hubuum_docs]\ntheme_overrides = "overrides"\n')
+        with self.assertRaisesRegex(ValueError, "escapes repository"):
+            versions.prepare(self.root / "source", self.root / "staged", "main", "a" * 40)
+
     def test_main_can_be_replaced_without_changing_release_snapshots(self):
         self.write("build/index.html", "original")
         archive = self.root / "archive"
