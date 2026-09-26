@@ -32,6 +32,7 @@ Additional `[tool.hubuum_docs]` settings are:
 | --- | --- |
 | `versioned` | Defaults to `true`; only the ecosystem landing page uses `false`. |
 | `source_files` | Maps repository files such as `README.md` into generated documentation paths; the originals remain canonical. |
+| `theme_overrides` | Optional template directory from the selected source revision, overlaid on the shared templates. Missing directories are allowed only for older releases. |
 | `source_trees` | Includes tagged source trees for generated API reference, such as the Python client's `src`. |
 | `builder` | `container` uses the digest-pinned official Zensical image; `uv` uses a Python project's locked documentation dependencies. |
 | `link_migrations` | Explicitly repairs historical moved-file/anchor links when the replacement exists in the selected tag. |
@@ -80,12 +81,22 @@ so its site uses the release-published event directly.
 `docs-publish.yml` checks out the exact source revision validated by the build
 and downloads that run's artifact. Publication is serialized per repository.
 It combines editions with the retained `gh-pages` archive, commits generated
-files under `site/`, and deploys a Pages artifact. A release's HTML, downloads,
-source revision, and renderer assets remain frozen; a moved tag is rejected.
-The single shared stylesheet, `assets/stylesheets/extra.css`, is refreshed from
-the pinned tooling for every retained edition, including older versions not
-rebuilt in that run. This lets layout and accessibility fixes reach released
-documentation without changing its prose, API reference, or version identity.
+files under `site/`, and deploys a Pages artifact. Release prose, downloads,
+source revisions, and renderer assets remain frozen; a moved tag is rejected.
+All editions load the unversioned shared stylesheet from
+<https://hubuum.github.io/assets/stylesheets/hubuum.css>. Its source is
+`docs/assets/stylesheets/hubuum.css` in `hubuum/hubuum.github.io`.
+Publish CSS changes there to update every site without product-repository
+commits, rebuilds, or releases. Tooling and renderer dependencies remain pinned.
+
+On adoption, publication migrates only the known legacy shared stylesheet links
+in retained HTML. The old `extra.css` path imports the live sheet for cached HTML;
+all other archived bytes are preserved. This is a deliberate presentation-only
+exception to release immutability. Publish the root stylesheet before migrating
+consumer sites. Keep changes compatible with retained renderer versions, and
+use normal Git reverts in the root repository to roll back styling. Browsers
+honour GitHub Pages' normal cache lifetime; updates are not instantaneous.
+
 The highest stable archived version remains the default when an older release
 is backfilled. Search stays within the selected edition.
 

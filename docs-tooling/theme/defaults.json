@@ -3,7 +3,7 @@
   "site_dir": "site",
   "strict": true,
   "extra_css": [
-    "assets/stylesheets/extra.css"
+    "https://hubuum.github.io/assets/stylesheets/hubuum.css"
   ],
   "extra_javascript": [
     "assets/javascripts/versions.js"
@@ -36,7 +36,7 @@
         "media": "(prefers-color-scheme: light)",
         "scheme": "default",
         "primary": "custom",
-        "accent": "teal",
+        "accent": "deep orange",
         "toggle": {
           "icon": "lucide/moon",
           "name": "Switch to dark mode"
@@ -46,7 +46,7 @@
         "media": "(prefers-color-scheme: dark)",
         "scheme": "slate",
         "primary": "custom",
-        "accent": "teal",
+        "accent": "deep orange",
         "toggle": {
           "icon": "lucide/sun",
           "name": "Switch to light mode"

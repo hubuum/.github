@@ -14,6 +14,7 @@ if sys.version_info < (3, 11):
 
 import argparse
 import html
+from html.parser import HTMLParser
 import json
 import os
 from pathlib import Path
@@ -26,6 +27,7 @@ from urllib.parse import quote, urlsplit
 ROOT = Path.cwd()
 TOOLING = Path(__file__).resolve().parent
 RELEASE = re.compile(r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\Z")
+LIVE_STYLESHEET = "https://hubuum.github.io/assets/stylesheets/hubuum.css"
 
 
 def validate_version(version: str) -> str:
@@ -136,6 +138,14 @@ def prepare(source: Path, destination: Path, version: str, source_sha: str) -> N
     api_version = "latest" if version == "main" else version.removeprefix("v")
     project = json.loads(json.dumps(project).replace("{version}", api_version))
     options = settings()
+    if relative := options.get("theme_overrides"):
+        overrides = inside(source, relative)
+        if overrides.is_dir():
+            for path in overrides.rglob("*"):
+                inside(source, str(path.relative_to(source)))
+            shutil.copytree(overrides, destination / "docs-theme/overrides", dirs_exist_ok=True)
+        elif version == "main":
+            raise ValueError(f"Configured theme overrides are missing: {relative}")
     origins = {page.relative_to(destination / "docs").as_posix(): source / "docs" / page.relative_to(destination / "docs") for page in (destination / "docs").rglob("*.md")}
     for original, rendered in options.get("source_files", {}).items():
         origin = inside(source, original)
@@ -275,8 +285,48 @@ def assemble(site: Path, archive: Path, version: str, source_sha: str) -> None:
         )
 
 
+class StylesheetMigration(HTMLParser):
+    """Replace only the known local theme href, preserving every other byte."""
+
+    def __init__(self, content: str, page: Path, stylesheet: Path):
+        super().__init__(convert_charrefs=False)
+        self.page = page
+        self.stylesheet = stylesheet
+        self.offsets = [0] + [match.end() for match in re.finditer("\n", content)]
+        self.replacements = []
+        self.feed(content)
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        if tag != "link" or "stylesheet" not in (attributes.get("rel") or "").lower().split():
+            return
+        href = urlsplit(attributes.get("href") or "")
+        if href.scheme or href.netloc or not href.path or href.path.startswith("/"):
+            return
+        if (self.page.parent / href.path).resolve() != self.stylesheet:
+            return
+        raw = self.get_starttag_text()
+        # Walk complete attributes so data-href or text inside another quoted
+        # attribute cannot be mistaken for the real stylesheet URL.
+        pattern = r'''([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?'''
+        for match in re.finditer(pattern, raw):
+            if match[1].lower() != "href":
+                continue
+            group = next((index for index in (2, 3, 4) if match[index] is not None), None)
+            if group is not None:
+                line, column = self.getpos()
+                start = self.offsets[line - 1] + column
+                self.replacements.append((start + match.start(group), start + match.end(group)))
+            break
+
+    def rewrite(self, content: str) -> str:
+        for start, end in reversed(self.replacements):
+            content = content[:start] + LIVE_STYLESHEET + content[end:]
+        return content
+
+
 def refresh_styles(archive: Path) -> None:
-    """Apply shared CSS fixes to retained editions without re-rendering them."""
+    """Migrate retained editions to the live theme without rebuilding content."""
     stylesheet = Path("assets/stylesheets/extra.css")
     manifest = archive / "versions.json"
     if manifest.exists():
@@ -284,15 +334,21 @@ def refresh_styles(archive: Path) -> None:
             validate_version(entry["version"])
             for entry in json.loads(manifest.read_text())
         ]
-        targets = [inside(archive, str(Path(edition) / stylesheet)) for edition in editions]
+        roots = [inside(archive, edition) for edition in editions]
     else:
-        targets = [inside(archive, str(stylesheet))]
+        roots = [archive.resolve()]
+    targets = [(root, inside(root, str(stylesheet))) for root in roots]
     content = (TOOLING / "theme" / stylesheet).read_bytes()
-    for target in targets:
-        # Only refresh the known shared stylesheet already used by an edition.
-        # Historical HTML, API/schema downloads, scripts and metadata stay intact.
+    for root, target in targets:
+        # Cached older HTML can still use the legacy path's live CSS import.
         if target.is_file():
             target.write_bytes(content)
+        for page in root.rglob("*.html"):
+            inside(root, str(page.relative_to(root)))
+            original = page.read_bytes().decode("utf-8")
+            updated = StylesheetMigration(original, page, target).rewrite(original)
+            if updated != original:
+                page.write_bytes(updated.encode("utf-8"))
 
 
 def main() -> int:
