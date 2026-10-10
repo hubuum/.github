@@ -43,6 +43,23 @@ links use the resolved tag commit. Tags predating the site get a generated entry
 page and navigation filtered to their original documents. Current tutorials are
 never copied into an older edition. Python API reference reads the tagged source.
 
+## Content policy
+
+- Start tutorials with prerequisites, a complete first command, and an expected
+  result. Keep configuration tables and implementation details in references.
+- Use Atlas's `Server`, `Service`, `Location`, and `Context` names in introductory
+  examples. Label specialist fixtures, such as Hosts/Rooms or Jacks, separately.
+- Keep the dataset model, permissions, downloads, and restore instructions in
+  the server guide. Companion guides add only their own commands and results.
+- Pin cross-project examples to the companion release's declared server target.
+  Use release pages for contracts; link to development only for unreleased work.
+- Keep compatibility matrices short. Retain immutable image identities and link
+  to detailed test evidence and the server's release-specific upgrade procedure.
+- Preserve page paths and old heading anchors when moving content. Update links
+  to the new canonical location without breaking existing bookmarks.
+- Use sentence-case headings, descriptive link text, valid complete JSON, and
+  explicit labels for syntax notation or partial payloads.
+
 ## Local builds
 
 Copy `bootstrap.sh` to the project's `scripts/docs.sh`. Pin this repository's full
@@ -99,6 +116,23 @@ honour GitHub Pages' normal cache lifetime; updates are not instantaneous.
 
 The highest stable archived version remains the default when an older release
 is backfilled. Search stays within the selected edition.
+
+### Verify the public release
+
+A release is not complete until its documentation is reachable on the public
+site. A successful build or an updated `gh-pages` archive alone is insufficient.
+After the Documentation deployment succeeds:
+
+1. Open the product's root URL and confirm it selects the latest released tag.
+2. Read the public `versions.json` and confirm that tag and its source SHA.
+3. Open `/vX.Y.Z/` and check its version banner, one guide, and the API reference.
+4. Compare `/vX.Y.Z/build.json` with the release commit when diagnosing drift.
+
+If the archive contains the edition but the public site does not, retry
+**Actions → Documentation → Run workflow**, select `main`, and enter the released
+tag in **version**. This republishes the retained archive without changing
+released prose. Check the public URLs again after deployment and normal Pages
+cache expiry. Do not move the tag or edit frozen release files to repair hosting.
 
 Archive retention is independent of Actions artifact expiry. Keep the
 `gh-pages` branch; never force-push or delete it. A manual workflow run on `main`
